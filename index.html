@@ -111,71 +111,77 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-        import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAYmwzpUznMAThokjfOKWugDyQZnLW2TN8",
-            authDomain: "motorrad-app-aeada.firebaseapp.com",
-            projectId: "motorrad-app-aeada",
-            storageBucket: "motorrad-app-aeada.firebasestorage.app",
-            messagingSenderId: "828705088641",
-            appId: "1:828705088641:web:064ced0628ccfcd1775980",
-            measurementId: "G-SRQS3B4E4F"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    <script>
+        // ⚠️ ERSETZE DIESE BEIDEN WERTE:
+        const SUPABASE_URL = "https://dein-projekt.supabase.co"; // Hier eintragen!
+        const SUPABASE_ANON_KEY = "eyJhbGc..."; // Hier eintragen!
 
         const appDiv = document.getElementById('app');
-        const motorcyclesRef = collection(db, 'motorcycles');
 
-        onSnapshot(motorcyclesRef, (snapshot) => {
-            const motorcycles = [];
-            snapshot.forEach(doc => {
-                motorcycles.push({ id: doc.id, ...doc.data() });
-            });
+        // Daten laden
+        async function loadMotorcycles() {
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/motorcycles?select=*`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
 
-            if (motorcycles.length === 0) {
-                appDiv.innerHTML = '<div class="loading">Noch keine Motorräder hinzugefügt!</div>';
-                return;
-            }
+                const motorcycles = await response.json();
 
-            appDiv.innerHTML = `
-                <div class="motorcycle-list">
-                    ${motorcycles.map(moto => `
-                        <div class="motorcycle-card">
-                            <img src="${moto.imageUrl || 'https://via.placeholder.com/400x250?text=Motorrad'}" 
-                                 alt="${moto.name}" 
-                                 class="motorcycle-image"
-                                 onerror="this.src='https://via.placeholder.com/400x250?text=Bild nicht gefunden'">
-                            <div class="motorcycle-info">
-                                <div class="motorcycle-name">${moto.name || 'Unbekannt'}</div>
-                                <div class="motorcycle-details">
-                                    <div class="detail-item">
-                                        <div class="detail-label">Typ</div>
-                                        <div class="detail-value">${moto.type || '-'}</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">Jahr</div>
-                                        <div class="detail-value">${moto.year || '-'}</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">Hubraum</div>
-                                        <div class="detail-value">${moto.cc || '-'} cc</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">PS</div>
-                                        <div class="detail-value">${moto.ps || '-'}</div>
+                if (!Array.isArray(motorcycles) || motorcycles.length === 0) {
+                    appDiv.innerHTML = '<div class="loading">Noch keine Motorräder hinzugefügt!</div>';
+                    return;
+                }
+
+                appDiv.innerHTML = `
+                    <div class="motorcycle-list">
+                        ${motorcycles.map(moto => `
+                            <div class="motorcycle-card">
+                                <img src="${moto.image_url || 'https://via.placeholder.com/400x250?text=Motorrad'}" 
+                                     alt="${moto.name}" 
+                                     class="motorcycle-image"
+                                     onerror="this.src='https://via.placeholder.com/400x250?text=Bild nicht gefunden'">
+                                <div class="motorcycle-info">
+                                    <div class="motorcycle-name">${moto.name || 'Unbekannt'}</div>
+                                    <div class="motorcycle-details">
+                                        <div class="detail-item">
+                                            <div class="detail-label">Typ</div>
+                                            <div class="detail-value">${moto.type || '-'}</div>
+                                        </div>
+                                        <div class="detail-item">
+                                            <div class="detail-label">Jahr</div>
+                                            <div class="detail-value">${moto.year || '-'}</div>
+                                        </div>
+                                        <div class="detail-item">
+                                            <div class="detail-label">Hubraum</div>
+                                            <div class="detail-value">${moto.cc || '-'} cc</div>
+                                        </div>
+                                        <div class="detail-item">
+                                            <div class="detail-label">PS</div>
+                                            <div class="detail-value">${moto.ps || '-'}</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        });
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                appDiv.innerHTML = `<div class="loading">❌ Fehler: ${error.message}</div>`;
+            }
+        }
+
+        // Initial laden
+        loadMotorcycles();
+
+        // Alle 5 Sekunden neu laden (auto-refresh)
+        setInterval(loadMotorcycles, 5000);
     </script>
 </body>
 </html>
+
